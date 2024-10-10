@@ -1,49 +1,53 @@
+// app/_components/Header.jsx
+import React from 'react';
+import Image from 'next/image';
+import { Search, ShoppingCart } from 'lucide-react';
+import { UserButton } from '@clerk/nextjs';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import Cart from './Cart';
 import Link from 'next/link';
 
-const Cart = ({ cartItems, removeFromCart, slug }) => {
-  // Calculate the total price
-  const totalPrice = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-
-  // If the cart is empty, show a message
-  if (cartItems.length === 0) {
-    return <p>Your cart is currently empty.</p>;
-  }
+const Header = ({ cartItems = [], setCart, slug }) => {
+  const removeFromCart = (id) => {
+    setCart((prevItems) => prevItems.filter((item) => item.id !== id));
+  };
 
   return (
-    <div className="cart-container">
-      <h3 className="text-lg font-semibold mb-2">Shopping Cart</h3>
-      <ul>
-        {cartItems.map((item) => (
-          <li key={item.id} className="flex justify-between items-center mb-2">
-            <div>
-              <p className="font-medium">{item.name}</p>
-              <p className="text-gray-500 text-sm">Quantity: {item.quantity}</p>
-              <p className="text-gray-500 text-sm">${item.price} each</p>
+    <div className="flex flex-col md:flex-row justify-between items-center p-4 md:px-20 shadow-sm bg-white">
+      <div className="flex-shrink-0 mb-4 md:mb-0">
+        <Image src="/logo.jpg" alt="Logo" width={100} height={50} />
+      </div>
+      <div className="flex items-center border p-2 rounded-lg bg-gray-200 w-full md:w-96 mb-4 md:mb-0">
+        <input type="text" className="flex-grow bg-transparent outline-none px-2" placeholder="Search..." />
+        <Search className="w-5 h-5 text-gray-500" />
+      </div>
+      <div className="flex gap-5 items-center">
+        <Popover>
+          <PopoverTrigger>
+            <div className="flex gap-2 items-center cursor-pointer">
+              <ShoppingCart />
+              <label className="p-1 px-2 rounded-full bg-slate-200">{cartItems.length || 0}</label>
             </div>
-            <div>
-              <button
-                onClick={() => removeFromCart(item.id)}
-                className="text-red-600 text-sm hover:underline"
-              >
-                Remove
-              </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64">
+            <div className="p-4">
+              <Cart cartItems={cartItems} removeFromCart={removeFromCart} />
             </div>
-          </li>
-        ))}
-      </ul>
+          </PopoverContent>
+        </Popover>
+        <UserButton showName />
+      </div>
 
-      {/* Total Price */}
-      <div className="mt-4">
-        <p className="text-lg font-semibold">Total: ${totalPrice.toFixed(2)}</p>
-        {/* Checkout button wrapped in Link */}
+      {/* Checkout button */}
+      {cartItems.length > 0 && slug && ( // Ensure slug is defined before rendering the link
         <Link href={`/checkout/${slug}`}>
-          <button className="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-md w-full">
-            Checkout (${totalPrice.toFixed(2)})
+          <button className="px-4 py-2 bg-indigo-600 text-white rounded-md">
+            Checkout
           </button>
         </Link>
-      </div>
+      )}
     </div>
   );
 };
 
-export default Cart;
+export default Header;

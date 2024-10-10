@@ -10,11 +10,33 @@ const Header = ({ cartItems = [], setCart }) => {
     setCart((prevItems) => prevItems.filter((item) => item.id !== id));
   };
 
+  // Calculate the total price of the items in the cart
+  const totalAmount = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+
   // Function to handle Stripe checkout redirection
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (cartItems.length > 0) {
-      // Redirect to the Stripe checkout page
-      window.location.href = 'https://buy.stripe.com/test_3cs5krezGb0wgeYaEE';
+      try {
+        const response = await fetch('/api/checkout_sessions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            items: cartItems, // Passing cart items to the backend
+          }),
+        });
+
+        const session = await response.json();
+        if (session.url) {
+          // Redirect to Stripe checkout page
+          window.location.href = session.url;
+        } else {
+          console.error('Error creating session:', session.error);
+        }
+      } catch (error) {
+        console.error('Error creating Stripe session:', error);
+      }
     }
   };
 
@@ -44,14 +66,14 @@ const Header = ({ cartItems = [], setCart }) => {
         <UserButton showName />
       </div>
 
-      {/* Checkout button with Stripe redirect */}
+      {/* Checkout button with total amount reflected */}
       <div>
         {cartItems.length > 0 ? (
           <button
             onClick={handleCheckout}
             className="px-4 py-2 bg-indigo-600 text-white rounded-md"
           >
-            Checkout
+            Checkout (${totalAmount.toFixed(2)}) {/* Display total amount */}
           </button>
         ) : (
           <button disabled className="px-4 py-2 bg-gray-400 text-white rounded-md cursor-not-allowed">
